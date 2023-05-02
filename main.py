@@ -1,69 +1,92 @@
-import time
+# Колун Дэнилэ 373732 (Вар 2)
 
+import time
 import cv2
 
 
-def image_processing():
-    img = cv2.imread('img_test.jpg')
-    #cv2.imshow('image', img)
-    w, h = img.shape[:2]
-    #(cX, cY) = (w // 2, h // 2)
-    #M = cv2.getRotationMatrix2D((cX, cY), 45, 1.0)
-    #rotated = cv2.warpAffine(img, M, (w, h))
-    #cv2.imshow('rotated', rotated)
 
-    #cat = img[250:580, 20:280]
-    #cv2.imshow('image', cat)
+# Первое задание
 
-    #r = cv2.selectROI(img)
-    #image_cropped = img[int(r[1]):int(r[1] + r[3]), int(r[0]):int(r[0] + r[2])]
-    #cv2.imshow('cropped', image_cropped)
+def gaussian():
 
-    cv2.line(img, (0, 0), (580, 600), (255, 0, 0), 5)
-    cv2.rectangle(img, (384, 10), (580, 128), (0, 252, 0), 3)
-    cv2.putText(img, 'Lab. No 8', (10, 500), cv2.FONT_HERSHEY_SIMPLEX, 3,
-                (0, 0, 255), 2, cv2.LINE_AA)
-    cv2.imshow('img', img)
+    image = cv2.imread('images/variant-2.png')
+
+    width = 800
+    height = 600
+
+    resolution = cv2.resize(image, (width, height), interpolation=cv2.INTER_LINEAR)
+    image_blur = cv2.GaussianBlur(resolution, (15, 15), 0)
+
+    cv2.imshow('img_blur_15', image_blur)
 
 
-def video_processing():
-    cap = cv2.VideoCapture(1)
-    down_points = (640, 480)
+# Второе задание + доп. задание
+
+def video_detect():
+
+    points = (640, 480)
+    capture = cv2.VideoCapture(0)
+    file = open('coordinates.txt', 'w')
+    coordinates = []
     i = 0
+
+    image = cv2.imread('fly64.png')
+    image = cv2.resize(image, (32, 32))
+    image_height, image_width, _ = image.shape
+
     while True:
-        ret, frame = cap.read()
-        if not ret:
+        rectangular, frame = capture.read()
+        if not rectangular:
             break
 
-        frame = cv2.resize(frame, down_points, interpolation=cv2.INTER_LINEAR)
+        frame = cv2.resize(frame, points, interpolation=cv2.INTER_LINEAR)
+
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (21, 21), 0)
-        ret, thresh = cv2.threshold(gray, 110, 255, cv2.THRESH_BINARY_INV)
 
-        contours, hierarchy = cv2.findContours(thresh,
-                            cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        rectangular, thresh = cv2.threshold(gray, 110, 255, cv2.THRESH_BINARY_INV)
+
+        contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
         if len(contours) > 0:
+
             c = max(contours, key=cv2.contourArea)
             x, y, w, h = cv2.boundingRect(c)
+
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            center = ((int(x + (w // 2) - 16)), int(y + (h // 2) - 16))
+
+            xcenter = center[0]
+            ycenter = center[1]
+
+            frame[ycenter:ycenter + image_height, xcenter:xcenter + image_width] = image
+
             if i % 5 == 0:
+
                 a = x + (w // 2)
                 b = y + (h // 2)
+
+                coordinates.append(a)
+                coordinates.append(b)
+
                 print(a, b)
 
+                file.write(str(coordinates) + '\n')
+                coordinates.clear()
+
         cv2.imshow('frame', frame)
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
         time.sleep(0.1)
         i += 1
 
-    cap.release()
+    capture.release()
 
 
 if __name__ == '__main__':
-    #image_processing()
-    video_processing()
-
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+    gaussian()
+    video_detect()
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
