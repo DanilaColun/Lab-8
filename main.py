@@ -27,7 +27,6 @@ def video_detect():
     points = (640, 480)
     capture = cv2.VideoCapture(0)
     file = open('coordinates.txt', 'w')
-    coordinates = []
     i = 0
 
     image = cv2.imread('fly64.png')
@@ -54,25 +53,20 @@ def video_detect():
             x, y, w, h = cv2.boundingRect(c)
 
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            center = ((int(x + (w // 2) - 16)), int(y + (h // 2) - 16))
 
-            xcenter = center[0]
-            ycenter = center[1]
-
-            frame[ycenter:ycenter + image_height, xcenter:xcenter + image_width] = image
+            frame[y + (h//2)-16:y + (h//2)-16+image_height, x + (w//2)-16:x + (w//2)-16+image_width] = image
 
             if i % 5 == 0:
 
                 a = x + (w // 2)
                 b = y + (h // 2)
 
-                coordinates.append(a)
-                coordinates.append(b)
+
 
                 print(a, b)
 
-                file.write(str(coordinates) + '\n')
-                coordinates.clear()
+                file.write(f"{a}  {b}" + '\n')
+
 
         cv2.imshow('frame', frame)
 
@@ -83,6 +77,7 @@ def video_detect():
         i += 1
 
     capture.release()
+    file.close()
 
 
 if __name__ == '__main__':
